@@ -1,0 +1,317 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/polymerfire/firebase-auth.html">
+<link rel="import" href="bower_components/polymerfire/firebase-query.html">
+<link rel="import" href="bower_components/iron-list/iron-list.html">
+<link rel="import" href="bower_components/paper-card/paper-card.html">
+<link rel="import" href="bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="bower_components/paper-input/paper-input.html">
+
+<link rel="import" href="bower_components/font-roboto/roboto.html">
+<link rel="import" href="bower_components/neon-animation/neon-animatable-behavior.html">
+<link rel="import" href="bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="bower_components/paper-dialog/paper-dialog.html">
+
+<link rel="import" href="bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="bower_components/app-layout/app-grid/app-grid-style.html">
+
+<link rel="import" href="bower_components/iron-collapse/iron-collapse.html">
+
+<link rel="import" href="bower_components/mat-elements/mat-progress.html">
+
+<link rel="import" href="bower_components/neon-animation/animations/slide-from-bottom-animation.html">
+
+<link rel="import" href="bower_components/neon-animation/animations/slide-down-animation.html">
+<!--<link rel="import" href="bower_components/iron-icons/iron-icons.html">-->
+<link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
+
+<link rel="stylesheet" type="text/css" href="css/main.css">
+
+
+
+<dom-module id="my-main">
+    <template>
+        <style include="app-grid-style">
+            :host {
+
+            }
+
+            li {
+                list-style: none;
+                margin-top: 16px;
+                margin-bottom: 16px;
+     
+            }
+
+            ul {
+                padding-left: 0px;
+                overflow-y: auto;
+                flex: 1;
+
+            }
+
+            paper-card {
+                width: 500px;
+                max-width: 95%;
+            }
+
+            .flex-child {
+              @apply(--layout-flex);
+            }
+
+            .fabcon {
+                --app-grid-expandible-item-columns: 3;
+                @apply(--app-grid-expandible-item);
+                @apply(--layout-horizontal);
+                @apply(--layout-end-justified);
+                
+            }
+
+            .flex-center-justified {
+                @apply(--layout-horizontal);
+                @apply(--layout-center-justified);
+                
+                
+            }
+
+            .flex-equal-justified {
+                @apply(--layout-horizontal);
+                @apply(--layout-justified);
+            }
+
+            .flex-equal-around-justified {
+                @apply(--layout-horizontal);
+                @apply(--layout-around-justified);
+            }
+
+            .spinner {
+                padding-left: 48px;
+
+
+            }
+
+            .fab {
+                position: fixed;
+                right: 36px;
+                bottom: 48px;
+                
+            }
+
+            .pib {
+                @apply(--layout-horizontal);
+                @apply(--layout-end-justified);
+            }
+
+            .circle {
+                display: inline-block;
+                box-sizing: border-box;
+                width: 24px;
+                height: 24px;
+                margin-right: -24px;
+                border-style: solid;
+                border-width: 2px;
+                border-color: white;
+                border-radius: 50%;
+                background: #ffeb3b;
+            }
+            
+        </style>
+
+        <div class="maincontainer">
+
+            <firebase-auth id="mauth" user="{{user}}" on-signed-in-changed="mqttload"></firebase-auth>
+            <firebase-query id="query" path="/users/[[user.uid]]/outlets" data="{{outlets}}">
+            </firebase-query>
+
+            <paper-toolbar>
+                <div class="circle"></div>
+                <span class="title">Outlet Control</span>
+                
+                <paper-button on-tap="logout">Sign out</paper-button>
+            </paper-toolbar>
+
+
+            <ul id="outlets-list" on-scroll="scrollfunc">
+                <template is="dom-repeat" items="[[outlets]]" as="outlet">
+                    <li class="flex-center-justified">
+                        <paper-card class="dark" elevation="1" animated-shadow="false">
+                            <div class="card-content">
+                                <div class="container flex-equal-justified">
+                                    
+                                    <div>[[outlet.name]]</div>
+                                    <!--<paper-progress indeterminate></paper-progress>-->
+                                                                         
+                                    <paper-toggle-button checked="[[outlet.on]]" outlet="[[outlet]]" on-change="ptbfunction"></paper-toggle-button>
+                                </div>
+                                
+                            </div>
+                            <mat-progress mode="query"></mat-progress> 
+                            <div class="card-actions">
+                                <div class="container flex-equal-around-justified">
+                                    <paper-icon-button icon="delete" outlet="[[outlet]]" on-tap="removeoutlet"></paper-icon-button>
+                                    <paper-icon-button icon="create" outlet="[[outlet]]" on-tap="edit"></paper-icon-button>
+                                    
+                                    
+                                    
+                                </div>
+                                <iron-collapse>
+                                        
+                                    <paper-input label="Name" value="[[outlet.name]]"></paper-input>
+                                    <!--<paper-input label="Code" value="[[outlet.code]]"></paper-input>-->
+                                    <paper-input label="Switch" value="[[outlet.switch]]"></paper-input>
+
+                                    <div class="pib">
+                                        <paper-icon-button icon="save" on-tap="updateedit" outlet="[[outlet]]"></paper-icon-button>
+                                    </div>
+                                    
+                                </iron-collapse>
+                            </div>
+                        </paper-card>
+
+                    </li>
+                </template>
+            </ul>
+        
+
+            
+            <paper-dialog id="madd" with-backdrop>
+                <h2>Add Outlet</h2>
+                
+                <paper-input id="aname" label="Name" autofocus></paper-input>
+                
+                <!--<paper-input id="acode" label="Code"></paper-input>-->
+                
+                <paper-input id="aswitch" label="Switch"></paper-input>
+                
+                <div class="pib">
+                    <paper-icon-button icon="done" on-tap="addoutlet"></paper-icon-button>
+                </div>
+                
+                
+                
+            </paper-dialog>
+            
+            
+            <paper-fab class="fab" id="fab" icon="add" on-tap="fabfunction"></paper-fab>
+            
+
+        </div>
+
+
+
+    </template>
+
+<script>
+        Polymer({
+            is: 'my-main',
+            behaviors: [Polymer.NeonAnimatableBehavior],
+            properties: {
+                user: {
+                    type: Object
+                },
+                outlets: {
+                    type: Object
+                },
+                animationConfig: {
+                    value: function () {
+                        return {
+                            'entry': {
+                                name: 'slide-from-bottom-animation',
+                                node: this
+                            },
+                            'exit': {
+                                name: 'slide-down-animation',
+                                node: this
+                            }
+                        }
+                    }
+                }
+            },
+            logout: function () {
+                this.$.mauth.signOut();
+                this.fire('sign-out');
+            },
+            fabfunction: function () {
+                this.$.madd.open();
+            },
+            addoutlet: function () {
+                this.$.query.ref.push({
+                    name: this.$.aname.value,
+                    // code: this.$.acode.value,
+                    switch: this.$.aswitch.value,
+                    on: false
+                }); 
+                this.$.madd.close();
+                
+            
+            },
+            removeoutlet: function (e) {
+                var key = e.currentTarget.outlet.$key;
+                this.$.query.ref.child(key).remove();
+                
+            },
+            ptbfunction: function (e) {
+                // DB call
+                var key = e.currentTarget.outlet.$key;
+                this.$.query.ref.child(key).update({
+                    on: e.currentTarget.checked
+                });
+                e.currentTarget.outlet.on = e.currentTarget.checked; 
+                // Broker call
+                publish("switch",JSON.stringify(e.currentTarget.outlet),2);
+
+                // Animation
+                var mat = e.currentTarget.parentNode.parentNode.parentNode.querySelector("mat-progress");
+                mat.showed = true;
+
+
+            },
+            edit: function (e) {
+                
+                e.currentTarget.parentNode.parentNode.querySelector("iron-collapse").toggle();
+
+            },
+            updateedit: function (e) {
+                var key = e.currentTarget.outlet.$key;
+                
+                this.$.query.ref.child(key).update({
+                    name: e.currentTarget.parentNode.parentNode.querySelector("[label~=Name]").value,
+                    // code: e.currentTarget.parentNode.parentNode.querySelector("[label~=Code]").value,
+                    switch: e.currentTarget.parentNode.parentNode.querySelector("[label~=Switch]").value
+                })
+
+                e.currentTarget.parentNode.parentNode.toggle();
+
+            },
+            scrollfunc: function (e) {
+                var scrolltop = document.getElementById("outlets-list").scrollTop;
+                var scrollheight = document.getElementById("outlets-list").scrollHeight - document.getElementById("outlets-list").clientHeight;
+
+                if (100 > scrolltop && scrolltop > 60 && scrollheight > 149) {
+                    document.getElementById("fab").style.transform = "translateY("+Math.round(scrolltop-60)+"px)";
+
+                } else if (scrolltop >= 100 && scrollheight > 149) {
+                    document.getElementById("fab").style.transform = "translateY("+Math.round((1.1*scrolltop)-60)+"px)";
+                } else {
+                    document.getElementById("fab").style.transform = "translateY(0px)";
+
+                }
+            },
+            mqttload: function(e) {
+                if (this.$.mauth.user) {
+                    var script = document.createElement("script");
+                    script.src = "jslib/bl.js";
+                    script.type = 'text/javascript';
+                    document.body.appendChild(script);
+                }
+                    
+                
+                
+            }
+        });
+    </script>
+    
+    <script src="jslib/mqttws31.js" type="text/javascript"></script>
+ 
+</dom-module>

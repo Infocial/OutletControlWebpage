@@ -1,0 +1,157 @@
+<link rel="import" href="bower_components/polymerfire/firebase-auth.html">
+<link rel="import" href="bower_components/paper-button/paper-button.html">
+<link rel="import" href="bower_components/paper-input/paper-input.html">
+<link rel="import" href="bower_components/iron-fit-behavior/iron-fit-behavior.html">
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/neon-animation/neon-animatable-behavior.html">
+<link rel="import" href="bower_components/neon-animation/animations/slide-up-animation.html">
+<link rel="import" href="bower_components/neon-animation/animations/slide-from-top-animation.html">
+
+
+<link rel="import" href="bower_components/font-roboto/roboto.html">
+
+<link rel="stylesheet" type="text/css" href="css/main.css">
+
+<dom-module id="my-login">
+    <template>
+        <style is="custom-style">
+            paper-button.sign {
+                color: black;
+                /*width: 100px;*/
+                background-color: white;
+                border: 2px solid black;
+                box-sizing: border-box;
+                text-align: center;
+                float: right;
+                font-weight: bold;
+                
+            }
+            paper-input.pw {
+                
+                padding-bottom: 30px;
+            }
+            .login {
+                
+                width: 300px;
+            }
+        </style>
+    <firebase-auth 
+        id="auth" 
+        user="{{user}}" 
+        status-known="{{statusKnown}}" 
+        on-error="handleError">
+    </firebase-auth>
+
+    <!--<div class="logincontainer">
+        <iron-fit-impl vertical-align="auto" horizontal-align="auto">
+            <div class="custom login">
+                <form id="loginform" onsubmit="return login();">
+                    <paper-input id="email" label="E-mail" error-message="E-mail is invalid" pattern="^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$"></paper-input>
+                    <paper-input class="custom pw" id="pw" label="Password" type="password" error-message="Password doesn't match email"></paper-input>
+                    <paper-button class="custom sign" type="submit">Sign in</paper-button>
+                </form>
+            </div>
+        </iron-fit-impl>
+    </div>-->
+
+    <div class="logincontainer">
+        <iron-fit-impl vertical-align="auto" horizontal-align="auto">
+            <div class="custom login">
+                <form>
+                    <paper-input id="email" label="E-mail" autocomplete="email" error-message="E-mail is invalid" pattern="^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$"></paper-input>
+                    <paper-input class="custom pw" id="pw" label="Password" type="password" autocomplete="current-password" error-message="Password doesn't match email" on-keydown="keyCheckerNow"></paper-input>
+                </form>
+                
+                <paper-button class="custom sign" on-tap="login">Sign in</paper-button>
+            </div>
+        </iron-fit-impl>
+    </div>
+
+
+
+</template>
+<script>
+        Polymer({
+            is: 'my-login',
+            behaviors: [Polymer.NeonAnimatableBehavior],
+            properties: {
+                user: {
+                    type: Object
+                },
+                statusKnown: {
+                    type: Boolean                  
+                },
+                animationConfig: {
+                    value: function() {
+                        return {
+                            'entry': {
+                                name: 'slide-from-top-animation',
+                                node: this
+                            },
+                            'exit': {
+                                name: 'slide-up-animation',
+                                node: this
+                            }
+                        }
+                    }
+                }
+
+            },
+            login: function () {
+                var that = this;
+                var ak = this.hashThis(this.$.pw.value);
+                this.$.auth.signInWithEmailAndPassword(this.$.email.value, this.$.pw.value).then(function(res){
+                    //document.getElementById("email").value = null;
+                    //this.$.pw.value = null;
+                    that.fire('signed-in');
+                    console.log("absolutely not");
+                    localStorage.setItem("ak",String(ak));
+
+                    
+                }, function(err) {
+                    console.log("properly yes");
+                    
+                    var es = document.getElementById("email");
+                    var ps = document.getElementById("pw");
+                    
+                    console.log(err.message);
+                    es.validate();
+                    ps.invalid = true;
+                    localStorage.setItem("ak","");
+                  
+                });
+                
+
+            },
+            logout: function () {
+                this.$.auth.signOut();
+                this.$.email.value = null;
+                this.$.pw.value = null;
+            },
+            anihelp: function () {
+                this.fire('signed-in');
+            },
+            keyCheckerNow: function(e) {
+                if (e.key == 'Enter') {
+                    this.login();
+                }
+            },
+            hashThis: function(str) {
+                var hashi = 5381,
+                    i    = str.length;
+
+                while(i) {
+                    hashi = (hashi * 33) ^ str.charCodeAt(--i);
+                }
+
+                return hashi >>> 0;
+            },
+            ready: function() {
+                var mthis = this;
+               
+            }
+
+        });
+        
+    </script>
+</dom-module>
